@@ -84,6 +84,8 @@ Luego activa GitHub Pages:
 5. Elige la rama `main` y la carpeta `/root`.
 6. Guarda los cambios.
 
+No escribas nada en **Custom domain**. Ese campo solo se usa si tienes un dominio propio, por ejemplo `quiz.tudominio.com`. La URL `https://TU-USUARIO.github.io/quiz-sce/host.html` no se registra ahí; GitHub la genera automáticamente cuando Pages queda activo.
+
 Después de unos minutos tendrás una URL pública similar a:
 
 ```text
