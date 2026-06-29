@@ -1,0 +1,1364 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Host | Quiz SCE</title>
+  <style>
+    :root {
+      --sce-purple: #4A1990;
+      --ink: #171124;
+      --muted: #6B6478;
+      --paper: #FFFFFF;
+      --line: rgba(23, 17, 36, 0.14);
+      --red: #E53E3E;
+      --blue: #2563EB;
+      --yellow: #D97706;
+      --green: #16A34A;
+      --gold: #FFD166;
+      --danger: #FF4D4D;
+      --shadow: 0 24px 60px rgba(16, 6, 42, 0.24);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--sce-purple);
+      color: var(--paper);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px clamp(20px, 3vw, 44px) 34px;
+    }
+
+    .host-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      min-height: 56px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255, 255, 255, 0.64);
+      border-radius: 8px;
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 20px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: clamp(22px, 2.1vw, 32px);
+      line-height: 1;
+      font-weight: 850;
+    }
+
+    .brand-subtitle {
+      margin: 5px 0 0;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 15px;
+    }
+
+    .header-metrics {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.92);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: #FACC15;
+      box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.18);
+    }
+
+    .status-dot.online {
+      background: #22C55E;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+    }
+
+    .status-dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.22);
+    }
+
+    .view {
+      flex: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .screen {
+      width: min(1160px, 100%);
+    }
+
+    .panel {
+      width: min(920px, 100%);
+      margin: 0 auto;
+      padding: clamp(28px, 4vw, 52px);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .panel.compact {
+      width: min(760px, 100%);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--sce-purple);
+      font-size: 15px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    .lobby-title {
+      margin-bottom: 14px;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: 0.94;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .lobby-copy {
+      max-width: 720px;
+      margin-bottom: 30px;
+      color: var(--muted);
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.3;
+    }
+
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 0.75fr) minmax(320px, 1.25fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .stat-box,
+    .url-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      background: #F7F4FF;
+    }
+
+    .stat-value {
+      display: block;
+      margin-top: 6px;
+      color: var(--sce-purple);
+      font-size: clamp(54px, 7vw, 88px);
+      line-height: 0.95;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label,
+    .field-label {
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .url-line {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      align-items: stretch;
+    }
+
+    .url-text {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      color: #24163C;
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 26px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      min-height: 54px;
+      padding: 0 22px;
+      border-radius: 8px;
+      font-weight: 850;
+      font-size: 18px;
+      transition: transform 150ms ease, box-shadow 150ms ease, opacity 150ms ease;
+    }
+
+    .primary-btn {
+      background: var(--gold);
+      color: #241006;
+      box-shadow: 0 12px 22px rgba(104, 57, 6, 0.22);
+    }
+
+    .secondary-btn {
+      background: #ECE6FA;
+      color: var(--sce-purple);
+    }
+
+    .primary-btn:hover:not(:disabled),
+    .secondary-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    .timer-strip {
+      position: relative;
+      width: 100%;
+      height: 14px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.22);
+      margin-bottom: 18px;
+    }
+
+    .timer-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--gold);
+      transform-origin: left center;
+      transition: width 220ms linear, background-color 150ms ease;
+    }
+
+    .timer-fill.urgent {
+      background: var(--danger);
+      animation: pulseBar 700ms ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseBar {
+      from {
+        filter: brightness(1);
+      }
+      to {
+        filter: brightness(1.25);
+      }
+    }
+
+    .question-layout {
+      display: grid;
+      gap: 18px;
+    }
+
+    .question-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      min-height: 190px;
+      padding: clamp(26px, 3vw, 42px);
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .question-card h2 {
+      margin: 0;
+      font-size: clamp(34px, 4.5vw, 62px);
+      line-height: 1.08;
+      font-weight: 900;
+    }
+
+    .question-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .meta-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #EFE8FF;
+      color: var(--sce-purple);
+      font-weight: 850;
+      font-size: 14px;
+    }
+
+    .timer-number {
+      display: grid;
+      place-items: center;
+      width: clamp(126px, 13vw, 170px);
+      height: clamp(126px, 13vw, 170px);
+      border-radius: 50%;
+      background: var(--sce-purple);
+      color: var(--paper);
+      font-size: clamp(54px, 6vw, 86px);
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-number.urgent {
+      background: var(--danger);
+      animation: pulseTimer 500ms ease-in-out infinite alternate;
+    }
+
+    @keyframes pulseTimer {
+      from {
+        transform: scale(1);
+      }
+      to {
+        transform: scale(1.04);
+      }
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .option-tile {
+      min-height: clamp(132px, 14vw, 190px);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 18px;
+      padding: 24px;
+      border-radius: 8px;
+      color: var(--paper);
+      box-shadow: 0 14px 28px rgba(12, 5, 27, 0.2);
+      transition: opacity 180ms ease, transform 180ms ease, outline-color 180ms ease;
+    }
+
+    .option-tile.red {
+      background: var(--red);
+    }
+
+    .option-tile.blue {
+      background: var(--blue);
+    }
+
+    .option-tile.yellow {
+      background: var(--yellow);
+    }
+
+    .option-tile.green {
+      background: var(--green);
+    }
+
+    .option-icon {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 34px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .option-text {
+      font-size: clamp(24px, 2.5vw, 36px);
+      line-height: 1.18;
+      font-weight: 850;
+      overflow-wrap: anywhere;
+    }
+
+    .option-tile.correct {
+      outline: 8px solid var(--gold);
+      transform: scale(1.01);
+    }
+
+    .option-tile.dim {
+      opacity: 0.28;
+      filter: grayscale(0.35);
+    }
+
+    .host-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding: 18px 0 0;
+    }
+
+    .response-count {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: clamp(20px, 2vw, 28px);
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .reveal-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .result-stat {
+      min-height: 112px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 16px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.13);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .result-stat strong {
+      font-size: clamp(36px, 4vw, 58px);
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .result-stat span {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 15px;
+      font-weight: 750;
+    }
+
+    .ranking {
+      display: grid;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .ranking-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 16px;
+      min-height: 68px;
+      padding: 14px 18px;
+      border-radius: 8px;
+      background: #F5F1FF;
+      border: 1px solid var(--line);
+    }
+
+    .rank-number {
+      color: var(--sce-purple);
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rank-name {
+      min-width: 0;
+      color: var(--ink);
+      font-size: clamp(22px, 2vw, 30px);
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .rank-points {
+      color: var(--green);
+      font-size: clamp(22px, 2vw, 30px);
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .empty-state {
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.4;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 20;
+      max-width: calc(100% - 32px);
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: #120A24;
+      color: var(--paper);
+      font-weight: 750;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28);
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.visible {
+      transform: translate(-50%, 0);
+      opacity: 1;
+    }
+
+    .error-note {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-left: 6px solid var(--danger);
+      border-radius: 8px;
+      background: #FFF1F2;
+      color: #7F1D1D;
+      font-weight: 700;
+    }
+
+    @media (max-width: 820px) {
+      .app {
+        padding: 18px;
+      }
+
+      .host-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .lobby-grid,
+      .question-card,
+      .option-grid,
+      .reveal-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .timer-number {
+        width: 120px;
+        height: 120px;
+        justify-self: start;
+      }
+
+      .ranking-row {
+        grid-template-columns: 52px minmax(0, 1fr);
+      }
+
+      .rank-points {
+        grid-column: 2;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="host-header" id="hostHeader"></header>
+    <main class="view" id="view" aria-live="polite"></main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = ""; // REEMPLAZAR
+    const SUPABASE_ANON_KEY = ""; // REEMPLAZAR
+    const SALA = "sala1";
+
+    const PREGUNTAS = [
+      {
+        pregunta: "¿Cuál es el objetivo principal de la libre competencia económica?",
+        opciones: [
+          "Maximizar las ganancias de las grandes empresas",
+          "Proteger el bienestar del consumidor",
+          "Fijar precios directamente en el mercado",
+          "Eliminar competidores del sector"
+        ],
+        correcta: 1,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿Qué organismo regula la competencia económica en Ecuador?",
+        opciones: [
+          "Ministerio de Economía y Finanzas",
+          "Banco Central del Ecuador",
+          "Superintendencia de Competencia Económica",
+          "Contraloría General del Estado"
+        ],
+        correcta: 2,
+        tiempo: 15
+      },
+      {
+        pregunta: "¿Cuál es un ejemplo de práctica restrictiva de la competencia?",
+        opciones: [
+          "Reducir costos de producción",
+          "Lanzar un nuevo producto al mercado",
+          "Acuerdo entre competidores para fijar precios",
+          "Contratar más personal de ventas"
+        ],
+        correcta: 2,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿Qué se entiende por 'posición dominante' en un mercado?",
+        opciones: [
+          "Tener más de 100 empleados",
+          "Capacidad de actuar independientemente de la competencia",
+          "Exportar productos a otros países",
+          "Tener presencia en redes sociales"
+        ],
+        correcta: 1,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿En qué consiste la 'abogacía de la competencia'?",
+        opciones: [
+          "Litigar casos en cortes internacionales",
+          "Fusionar empresas del sector privado",
+          "Promover políticas que favorezcan mercados competitivos",
+          "Regular tarifas de servicios públicos"
+        ],
+        correcta: 2,
+        tiempo: 20
+      }
+    ];
+
+    const ICONOS = ["▲", "◆", "●", "■"];
+    const OPCION_CLASES = ["red", "blue", "yellow", "green"];
+    const estadoConexion = {
+      label: "Conectando",
+      type: "pending"
+    };
+
+    let supabaseClient = null;
+    let gameState = null;
+    let respuestas = [];
+    let participantes = 0;
+    let timerInterval = null;
+    let revealInFlight = false;
+    let toastTimer = null;
+    let stateChannel = null;
+    let respuestasChannel = null;
+    let presenceChannel = null;
+
+    const header = document.getElementById("hostHeader");
+    const view = document.getElementById("view");
+    const toast = document.getElementById("toast");
+
+    document.addEventListener("DOMContentLoaded", iniciar);
+    document.addEventListener("click", manejarClick);
+
+    async function iniciar() {
+      renderHeader();
+
+      if (!credencialesListas()) {
+        estadoConexion.label = "Configurar";
+        estadoConexion.type = "error";
+        renderHeader();
+        renderConfigurarSupabase();
+        return;
+      }
+
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        await cargarEstadoInicial();
+        await cargarRespuestas();
+        configurarRealtime();
+        configurarPresencia();
+        iniciarReloj();
+        estadoConexion.label = "Conectado";
+        estadoConexion.type = "online";
+        render();
+      } catch (error) {
+        console.error(error);
+        estadoConexion.label = "Error";
+        estadoConexion.type = "error";
+        renderHeader();
+        renderError("No se pudo conectar con Supabase. Revisa las credenciales y ejecuta setup.sql.");
+      }
+    }
+
+    function credencialesListas() {
+      try {
+        const url = new URL(SUPABASE_URL);
+        return url.protocol.startsWith("http") && SUPABASE_ANON_KEY.trim().length > 20;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function cargarEstadoInicial() {
+      const { data, error } = await supabaseClient
+        .from("game_state")
+        .select("*")
+        .eq("id", SALA)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        gameState = data;
+        return;
+      }
+
+      const { data: creado, error: upsertError } = await supabaseClient
+        .from("game_state")
+        .upsert({
+          id: SALA,
+          activo: false,
+          pregunta_idx: 0,
+          revelada: false,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (upsertError) throw upsertError;
+      gameState = creado;
+    }
+
+    async function cargarRespuestas() {
+      const { data, error } = await supabaseClient
+        .from("respuestas")
+        .select("*")
+        .eq("sala", SALA);
+
+      if (error) throw error;
+      respuestas = data || [];
+    }
+
+    function configurarRealtime() {
+      stateChannel = supabaseClient
+        .channel("host-game-state")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "game_state", filter: "id=eq." + SALA },
+          async (payload) => {
+            gameState = payload.new;
+            revealInFlight = false;
+            await cargarRespuestasSeguro();
+            render();
+          }
+        )
+        .subscribe((status) => actualizarEstadoCanal(status));
+
+      respuestasChannel = supabaseClient
+        .channel("host-respuestas")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "respuestas", filter: "sala=eq." + SALA },
+          async () => {
+            await cargarRespuestasSeguro();
+            render();
+          }
+        )
+        .subscribe((status) => actualizarEstadoCanal(status));
+    }
+
+    function configurarPresencia() {
+      presenceChannel = supabaseClient
+        .channel("presence:" + SALA, {
+          config: {
+            presence: {
+              key: "host-" + crearIdCorto()
+            }
+          }
+        })
+        .on("presence", { event: "sync" }, () => {
+          participantes = contarParticipantes(presenceChannel.presenceState());
+          renderHeader();
+          render();
+        })
+        .subscribe(async (status) => {
+          actualizarEstadoCanal(status);
+          if (status === "SUBSCRIBED") {
+            await presenceChannel.track({
+              role: "host",
+              online_at: new Date().toISOString()
+            });
+          }
+        });
+    }
+
+    function actualizarEstadoCanal(status) {
+      if (status === "SUBSCRIBED") {
+        estadoConexion.label = "Conectado";
+        estadoConexion.type = "online";
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        estadoConexion.label = "Reconectando";
+        estadoConexion.type = "pending";
+      }
+      renderHeader();
+    }
+
+    async function cargarRespuestasSeguro() {
+      try {
+        await cargarRespuestas();
+      } catch (error) {
+        console.error(error);
+        mostrarToast("No se pudieron actualizar las respuestas.");
+      }
+    }
+
+    function iniciarReloj() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        actualizarTimerVisual();
+        if (!gameState || !gameState.activo || gameState.revelada) return;
+        if (gameState.pregunta_idx >= PREGUNTAS.length) return;
+        const restante = tiempoRestanteMs();
+        if (restante <= 0 && !revealInFlight) {
+          revelarRespuesta().catch((error) => {
+            revealInFlight = false;
+            console.error(error);
+            mostrarToast("No se pudo revelar la respuesta automáticamente.");
+          });
+        }
+      }, 250);
+    }
+
+    async function manejarClick(event) {
+      const boton = event.target.closest("[data-action]");
+      if (!boton) return;
+
+      const accion = boton.dataset.action;
+      boton.disabled = true;
+
+      try {
+        if (accion === "start") await iniciarPartida();
+        if (accion === "reveal") await revelarRespuesta();
+        if (accion === "next") await siguientePregunta();
+        if (accion === "new") await iniciarPartida();
+        if (accion === "copy-url") await copiarUrlJugador();
+      } catch (error) {
+        console.error(error);
+        mostrarToast(error.message || "No se pudo completar la acción.");
+      } finally {
+        boton.disabled = false;
+      }
+    }
+
+    async function iniciarPartida() {
+      const { error: deleteError } = await supabaseClient
+        .from("respuestas")
+        .delete()
+        .eq("sala", SALA);
+
+      if (deleteError) throw deleteError;
+      respuestas = [];
+
+      const { data, error } = await supabaseClient
+        .from("game_state")
+        .upsert({
+          id: SALA,
+          activo: true,
+          pregunta_idx: 0,
+          revelada: false,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      gameState = data;
+      render();
+    }
+
+    async function revelarRespuesta() {
+      if (!gameState || gameState.revelada || revealInFlight) return;
+      revealInFlight = true;
+
+      const { data, error } = await supabaseClient
+        .from("game_state")
+        .update({ revelada: true })
+        .eq("id", SALA)
+        .select()
+        .single();
+
+      revealInFlight = false;
+      if (error) throw error;
+      gameState = data;
+      render();
+    }
+
+    async function siguientePregunta() {
+      if (!gameState) return;
+      const siguiente = Number(gameState.pregunta_idx) + 1;
+
+      if (siguiente >= PREGUNTAS.length) {
+        const { data, error } = await supabaseClient
+          .from("game_state")
+          .update({
+            activo: false,
+            pregunta_idx: PREGUNTAS.length,
+            revelada: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", SALA)
+          .select()
+          .single();
+
+        if (error) throw error;
+        gameState = data;
+        render();
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("game_state")
+        .update({
+          activo: true,
+          pregunta_idx: siguiente,
+          revelada: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", SALA)
+        .select()
+        .single();
+
+      if (error) throw error;
+      gameState = data;
+      render();
+    }
+
+    async function copiarUrlJugador() {
+      const url = obtenerUrlJugador();
+      if (!navigator.clipboard) {
+        mostrarToast(url);
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      mostrarToast("URL de participantes copiada.");
+    }
+
+    function renderHeader() {
+      header.innerHTML = `
+        <div class="brand">
+          <div class="brand-mark">SCE</div>
+          <div>
+            <h1 class="brand-title">Quiz de competencia económica</h1>
+            <p class="brand-subtitle">Pantalla del facilitador</p>
+          </div>
+        </div>
+        <div class="header-metrics">
+          <div class="pill"><span class="status-dot ${estadoConexion.type === "online" ? "online" : estadoConexion.type === "error" ? "error" : ""}"></span>${escapeHtml(estadoConexion.label)}</div>
+          <div class="pill">${participantes} participantes</div>
+        </div>
+      `;
+    }
+
+    function render() {
+      renderHeader();
+
+      if (!gameState) {
+        renderCargando();
+        return;
+      }
+
+      if (!gameState.activo && Number(gameState.pregunta_idx) >= PREGUNTAS.length) {
+        renderFinal();
+        return;
+      }
+
+      if (!gameState.activo) {
+        renderLobby();
+        return;
+      }
+
+      if (Number(gameState.pregunta_idx) >= PREGUNTAS.length) {
+        renderFinal();
+        return;
+      }
+
+      if (gameState.revelada) {
+        renderRevelada();
+        return;
+      }
+
+      renderPreguntaActiva();
+    }
+
+    function renderConfigurarSupabase() {
+      view.innerHTML = `
+        <section class="panel compact">
+          <p class="eyebrow">Configuración</p>
+          <h2 class="lobby-title">Supabase</h2>
+          <p class="lobby-copy">Reemplaza <strong>SUPABASE_URL</strong> y <strong>SUPABASE_ANON_KEY</strong> al inicio de este archivo.</p>
+          <div class="error-note">Luego ejecuta <strong>setup.sql</strong> en Supabase y recarga esta página.</div>
+        </section>
+      `;
+    }
+
+    function renderError(mensaje) {
+      view.innerHTML = `
+        <section class="panel compact">
+          <p class="eyebrow">Error</p>
+          <h2>No se pudo iniciar el host</h2>
+          <div class="error-note">${escapeHtml(mensaje)}</div>
+        </section>
+      `;
+    }
+
+    function renderCargando() {
+      view.innerHTML = `
+        <section class="panel compact">
+          <p class="eyebrow">Conectando</p>
+          <h2>Cargando sala...</h2>
+        </section>
+      `;
+    }
+
+    function renderLobby() {
+      view.innerHTML = `
+        <section class="screen">
+          <div class="panel">
+            <p class="eyebrow">Sala ${escapeHtml(SALA)}</p>
+            <h2 class="lobby-title">Quiz SCE</h2>
+            <p class="lobby-copy">Competencia económica en vivo para capacitación presencial.</p>
+            <div class="lobby-grid">
+              <div class="stat-box">
+                <span class="stat-label">Participantes conectados</span>
+                <strong class="stat-value">${participantes}</strong>
+              </div>
+              <div class="url-box">
+                <span class="field-label">URL para participantes</span>
+                <div class="url-line">
+                  <div class="url-text" title="${escapeHtml(obtenerUrlJugador())}">${escapeHtml(obtenerUrlJugador())}</div>
+                  <button class="secondary-btn" data-action="copy-url">Copiar</button>
+                </div>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary-btn" data-action="start">Iniciar juego</button>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderPreguntaActiva() {
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      const actuales = respuestasPreguntaActual();
+      const totalEsperado = Math.max(participantes, contarJugadoresUnicos(actuales));
+
+      view.innerHTML = `
+        <section class="screen question-layout">
+          <div class="timer-strip" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
+          <article class="question-card">
+            <div>
+              <div class="question-meta">
+                <span class="meta-chip">Pregunta ${idx + 1} de ${PREGUNTAS.length}</span>
+                <span class="meta-chip">${pregunta.tiempo} segundos</span>
+              </div>
+              <h2>${escapeHtml(pregunta.pregunta)}</h2>
+            </div>
+            <div class="timer-number" id="timerNumber">${Math.ceil(tiempoRestanteMs() / 1000)}</div>
+          </article>
+          <div class="option-grid">
+            ${pregunta.opciones.map((opcion, opcionIdx) => renderOpcion(opcion, opcionIdx, "")).join("")}
+          </div>
+          <div class="host-controls">
+            <div class="response-count">${contarJugadoresUnicos(actuales)} / ${totalEsperado} respuestas</div>
+            <button class="primary-btn" data-action="reveal">Revelar respuesta</button>
+          </div>
+        </section>
+      `;
+      actualizarTimerVisual();
+    }
+
+    function renderRevelada() {
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      const actuales = respuestasPreguntaActual();
+      const total = contarJugadoresUnicos(actuales);
+      const aciertos = contarAciertosUnicos(actuales);
+      const porcentaje = total ? Math.round((aciertos / total) * 100) : 0;
+      const boton = idx === PREGUNTAS.length - 1 ? "Ver resultados" : "Siguiente pregunta";
+
+      view.innerHTML = `
+        <section class="screen question-layout">
+          <article class="question-card">
+            <div>
+              <div class="question-meta">
+                <span class="meta-chip">Respuesta revelada</span>
+                <span class="meta-chip">Pregunta ${idx + 1} de ${PREGUNTAS.length}</span>
+              </div>
+              <h2>${escapeHtml(pregunta.pregunta)}</h2>
+            </div>
+            <div class="timer-number">0</div>
+          </article>
+          <div class="option-grid">
+            ${pregunta.opciones.map((opcion, opcionIdx) => renderOpcion(
+              opcion,
+              opcionIdx,
+              opcionIdx === pregunta.correcta ? "correct" : "dim"
+            )).join("")}
+          </div>
+          <div class="reveal-stats">
+            <div class="result-stat"><strong>${aciertos}</strong><span>aciertos</span></div>
+            <div class="result-stat"><strong>${porcentaje}%</strong><span>porcentaje correcto</span></div>
+            <div class="result-stat"><strong>${total}</strong><span>respuestas recibidas</span></div>
+          </div>
+          <div class="host-controls">
+            <div class="response-count">Ranking actualizado con bonus por velocidad</div>
+            <button class="primary-btn" data-action="next">${boton}</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderFinal() {
+      const ranking = calcularRanking().slice(0, 5);
+
+      view.innerHTML = `
+        <section class="panel">
+          <p class="eyebrow">Resultados finales</p>
+          <h2 class="lobby-title">Top 5</h2>
+          ${ranking.length ? `
+            <div class="ranking">
+              ${ranking.map((fila, idx) => `
+                <div class="ranking-row">
+                  <div class="rank-number">#${idx + 1}</div>
+                  <div class="rank-name">${escapeHtml(fila.jugador)}</div>
+                  <div class="rank-points">${fila.puntos} pts</div>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<p class="empty-state">Aún no hay respuestas registradas para esta partida.</p>`}
+          <div class="actions">
+            <button class="primary-btn" data-action="new">Nueva partida</button>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderOpcion(opcion, idx, extraClase) {
+      return `
+        <div class="option-tile ${OPCION_CLASES[idx]} ${extraClase}">
+          <span class="option-icon">${ICONOS[idx]}</span>
+          <span class="option-text">${escapeHtml(opcion)}</span>
+        </div>
+      `;
+    }
+
+    function actualizarTimerVisual() {
+      const fill = document.getElementById("timerFill");
+      const number = document.getElementById("timerNumber");
+      if (!fill && !number) return;
+      if (!gameState || gameState.revelada || !gameState.activo) return;
+
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      if (!pregunta) return;
+
+      const restante = tiempoRestanteMs();
+      const total = pregunta.tiempo * 1000;
+      const porcentaje = Math.max(0, Math.min(100, (restante / total) * 100));
+      const segundos = Math.ceil(restante / 1000);
+      const urgente = segundos <= 5;
+
+      if (fill) {
+        fill.style.width = porcentaje + "%";
+        fill.classList.toggle("urgent", urgente);
+      }
+
+      if (number) {
+        number.textContent = segundos;
+        number.classList.toggle("urgent", urgente);
+      }
+    }
+
+    function tiempoRestanteMs() {
+      if (!gameState || Number(gameState.pregunta_idx) >= PREGUNTAS.length) return 0;
+      const pregunta = PREGUNTAS[Number(gameState.pregunta_idx)];
+      const inicio = Date.parse(gameState.updated_at);
+      const transcurrido = Date.now() - inicio;
+      return Math.max(0, pregunta.tiempo * 1000 - transcurrido);
+    }
+
+    function respuestasPreguntaActual() {
+      if (!gameState) return [];
+      const idx = Number(gameState.pregunta_idx);
+      return respuestas.filter((respuesta) => Number(respuesta.pregunta_idx) === idx);
+    }
+
+    function contarJugadoresUnicos(lista) {
+      return new Set(lista.map((respuesta) => normalizarNombre(respuesta.jugador))).size;
+    }
+
+    function contarAciertosUnicos(lista) {
+      const aciertos = new Set();
+      lista.forEach((respuesta) => {
+        if (respuesta.correcta) aciertos.add(normalizarNombre(respuesta.jugador));
+      });
+      return aciertos.size;
+    }
+
+    function contarParticipantes(presenceState) {
+      const nombres = new Set();
+      Object.values(presenceState).flat().forEach((presencia) => {
+        if (presencia.role === "player" && presencia.jugador) {
+          nombres.add(normalizarNombre(presencia.jugador));
+        }
+      });
+      return nombres.size;
+    }
+
+    function calcularRanking() {
+      const acumulado = new Map();
+
+      respuestas.forEach((respuesta) => {
+        const nombre = String(respuesta.jugador || "").trim();
+        if (!nombre) return;
+        const clave = normalizarNombre(nombre);
+        const actual = acumulado.get(clave) || {
+          jugador: nombre,
+          puntos: 0,
+          correctas: 0,
+          respuestas: 0,
+          tiempoTotal: 0
+        };
+
+        const puntos = calcularPuntos(respuesta);
+        actual.puntos += puntos;
+        actual.respuestas += 1;
+        actual.tiempoTotal += Number(respuesta.tiempo_ms) || 0;
+        if (respuesta.correcta) actual.correctas += 1;
+        acumulado.set(clave, actual);
+      });
+
+      return Array.from(acumulado.values()).sort((a, b) => {
+        if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+        if (b.correctas !== a.correctas) return b.correctas - a.correctas;
+        return a.tiempoTotal - b.tiempoTotal;
+      });
+    }
+
+    function calcularPuntos(respuesta) {
+      if (!respuesta || !respuesta.correcta) return 0;
+      const pregunta = PREGUNTAS[Number(respuesta.pregunta_idx)];
+      if (!pregunta) return 0;
+      const maximoMs = pregunta.tiempo * 1000;
+      const tiempo = Math.max(0, Math.min(Number(respuesta.tiempo_ms) || 0, maximoMs));
+      const bonus = Math.max(0, Math.round((1 - tiempo / maximoMs) * 500));
+      return 1000 + bonus;
+    }
+
+    function obtenerUrlJugador() {
+      const href = window.location.href;
+      if (href.includes("host.html")) return href.replace("host.html", "player.html");
+      if (href.endsWith("/")) return href + "player.html";
+      return href.replace(/[^/]*$/, "player.html");
+    }
+
+    function normalizarNombre(nombre) {
+      return String(nombre || "").trim().toLocaleLowerCase("es");
+    }
+
+    function crearIdCorto() {
+      if (window.crypto && crypto.getRandomValues) {
+        const bytes = new Uint32Array(2);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes).map((n) => n.toString(36)).join("-");
+      }
+      return String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+    }
+
+    function mostrarToast(mensaje) {
+      clearTimeout(toastTimer);
+      toast.textContent = mensaje;
+      toast.classList.add("visible");
+      toastTimer = setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 2600);
+    }
+
+    function escapeHtml(valor) {
+      return String(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

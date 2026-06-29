@@ -1,0 +1,1232 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Participante | Quiz SCE</title>
+  <style>
+    :root {
+      --bg: #15101F;
+      --panel: #FFFFFF;
+      --ink: #171124;
+      --muted: #6B6478;
+      --sce-purple: #4A1990;
+      --red: #E53E3E;
+      --blue: #2563EB;
+      --yellow: #D97706;
+      --green: #16A34A;
+      --gold: #FFD166;
+      --line: rgba(255, 255, 255, 0.16);
+      --danger: #FF4D4D;
+      --shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--panel);
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .app {
+      width: min(480px, 100%);
+      min-height: 100vh;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 16px 22px;
+    }
+
+    .topbar {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 2px solid rgba(255, 255, 255, 0.44);
+      border-radius: 8px;
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 16px;
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      min-width: 0;
+      margin: 0;
+      color: rgba(255, 255, 255, 0.94);
+      font-size: 18px;
+      line-height: 1.1;
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .connection {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: rgba(255, 255, 255, 0.86);
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+      font-weight: 750;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #FACC15;
+      box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.16);
+    }
+
+    .dot.online {
+      background: #22C55E;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.16);
+    }
+
+    .dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.2);
+    }
+
+    .view {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .card {
+      width: 100%;
+      padding: 24px;
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .card.dark {
+      background: #211934;
+      color: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--sce-purple);
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .dark .eyebrow {
+      color: var(--gold);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    .title {
+      margin-bottom: 12px;
+      font-size: clamp(36px, 12vw, 56px);
+      line-height: 0.98;
+      font-weight: 950;
+    }
+
+    .subtitle {
+      margin-bottom: 22px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.34;
+      font-weight: 600;
+    }
+
+    .dark .subtitle {
+      color: rgba(255, 255, 255, 0.72);
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin: 18px 0;
+    }
+
+    label {
+      color: #33294A;
+      font-weight: 850;
+      font-size: 15px;
+    }
+
+    input {
+      width: 100%;
+      min-height: 58px;
+      padding: 0 16px;
+      border: 2px solid #E4DDF3;
+      border-radius: 8px;
+      color: var(--ink);
+      background: #FAF8FF;
+      font-size: 20px;
+      font-weight: 750;
+      outline: 0;
+    }
+
+    input:focus {
+      border-color: var(--sce-purple);
+      box-shadow: 0 0 0 4px rgba(74, 25, 144, 0.16);
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      min-height: 58px;
+      border-radius: 8px;
+      font-size: 19px;
+      font-weight: 900;
+      transition: transform 130ms ease, opacity 130ms ease;
+    }
+
+    .primary-btn {
+      background: var(--gold);
+      color: #241006;
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--panel);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .primary-btn:active:not(:disabled),
+    .secondary-btn:active:not(:disabled),
+    .answer-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .message {
+      min-height: 24px;
+      margin: 12px 0 0;
+      color: #9F1239;
+      font-weight: 750;
+      line-height: 1.3;
+    }
+
+    .status-name {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      min-height: 40px;
+      padding: 7px 11px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: var(--gold);
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .timer-strip {
+      position: relative;
+      height: 12px;
+      overflow: hidden;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      margin: 0 0 14px;
+    }
+
+    .timer-fill {
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--gold);
+      transition: width 220ms linear, background-color 150ms ease;
+    }
+
+    .timer-fill.urgent {
+      background: var(--danger);
+    }
+
+    .question-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .question-count {
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .timer-number {
+      display: grid;
+      place-items: center;
+      min-width: 58px;
+      height: 46px;
+      padding: 0 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--gold);
+      font-size: 28px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-number.urgent {
+      background: var(--danger);
+      color: var(--panel);
+    }
+
+    .answer-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .answer-btn {
+      width: 100%;
+      min-height: 80px;
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      color: var(--panel);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.24);
+      text-align: left;
+      transition: transform 130ms ease, opacity 130ms ease, outline-color 130ms ease;
+    }
+
+    .answer-btn.red {
+      background: var(--red);
+    }
+
+    .answer-btn.blue {
+      background: var(--blue);
+    }
+
+    .answer-btn.yellow {
+      background: var(--yellow);
+    }
+
+    .answer-btn.green {
+      background: var(--green);
+    }
+
+    .answer-btn.selected {
+      outline: 5px solid var(--gold);
+      transform: scale(0.98);
+    }
+
+    .answer-icon {
+      display: grid;
+      place-items: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .answer-text {
+      min-width: 0;
+      font-size: clamp(20px, 6vw, 25px);
+      line-height: 1.14;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .big-result {
+      margin: 8px 0 10px;
+      font-size: clamp(44px, 13vw, 64px);
+      line-height: 0.98;
+      font-weight: 950;
+    }
+
+    .score-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .score-box {
+      min-height: 92px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+    }
+
+    .score-box strong {
+      display: block;
+      color: var(--gold);
+      font-size: 32px;
+      line-height: 1;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-box span {
+      display: block;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .spinner {
+      width: 54px;
+      height: 54px;
+      margin: 20px auto 4px;
+      border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 850ms linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .ranking {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .rank-row {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 54px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .rank-row.me {
+      outline: 3px solid var(--gold);
+    }
+
+    .rank-pos,
+    .rank-points {
+      color: var(--gold);
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .rank-name {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 850;
+    }
+
+    .error-note {
+      margin-top: 16px;
+      padding: 13px 14px;
+      border-left: 6px solid var(--danger);
+      border-radius: 8px;
+      background: #FFF1F2;
+      color: #7F1D1D;
+      font-weight: 750;
+      line-height: 1.35;
+      text-align: left;
+    }
+
+    @media (max-width: 360px) {
+      .app {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      .answer-btn {
+        grid-template-columns: 42px minmax(0, 1fr);
+      }
+
+      .answer-icon {
+        width: 42px;
+        height: 42px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar" id="topbar"></header>
+    <main class="view" id="view" aria-live="polite"></main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script>
+    const SUPABASE_URL = ""; // REEMPLAZAR
+    const SUPABASE_ANON_KEY = ""; // REEMPLAZAR
+    const SALA = "sala1";
+    const STORAGE_NOMBRE = "kahoot_sce_nombre";
+
+    const PREGUNTAS = [
+      {
+        pregunta: "¿Cuál es el objetivo principal de la libre competencia económica?",
+        opciones: [
+          "Maximizar las ganancias de las grandes empresas",
+          "Proteger el bienestar del consumidor",
+          "Fijar precios directamente en el mercado",
+          "Eliminar competidores del sector"
+        ],
+        correcta: 1,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿Qué organismo regula la competencia económica en Ecuador?",
+        opciones: [
+          "Ministerio de Economía y Finanzas",
+          "Banco Central del Ecuador",
+          "Superintendencia de Competencia Económica",
+          "Contraloría General del Estado"
+        ],
+        correcta: 2,
+        tiempo: 15
+      },
+      {
+        pregunta: "¿Cuál es un ejemplo de práctica restrictiva de la competencia?",
+        opciones: [
+          "Reducir costos de producción",
+          "Lanzar un nuevo producto al mercado",
+          "Acuerdo entre competidores para fijar precios",
+          "Contratar más personal de ventas"
+        ],
+        correcta: 2,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿Qué se entiende por 'posición dominante' en un mercado?",
+        opciones: [
+          "Tener más de 100 empleados",
+          "Capacidad de actuar independientemente de la competencia",
+          "Exportar productos a otros países",
+          "Tener presencia en redes sociales"
+        ],
+        correcta: 1,
+        tiempo: 20
+      },
+      {
+        pregunta: "¿En qué consiste la 'abogacía de la competencia'?",
+        opciones: [
+          "Litigar casos en cortes internacionales",
+          "Fusionar empresas del sector privado",
+          "Promover políticas que favorezcan mercados competitivos",
+          "Regular tarifas de servicios públicos"
+        ],
+        correcta: 2,
+        tiempo: 20
+      }
+    ];
+
+    const ICONOS = ["▲", "◆", "●", "■"];
+    const OPCION_CLASES = ["red", "blue", "yellow", "green"];
+    const estadoConexion = {
+      label: "Conectando",
+      type: "pending"
+    };
+
+    let supabaseClient = null;
+    let gameState = null;
+    let jugador = localStorage.getItem(STORAGE_NOMBRE) || "";
+    let unido = false;
+    let respuestasPropias = [];
+    let todasRespuestas = [];
+    let nombresConectados = new Set();
+    let enviandoRespuesta = false;
+    let opcionTemporal = null;
+    let timerInterval = null;
+    let stateChannel = null;
+    let respuestasChannel = null;
+    let presenceChannel = null;
+
+    const topbar = document.getElementById("topbar");
+    const view = document.getElementById("view");
+
+    document.addEventListener("DOMContentLoaded", iniciar);
+    document.addEventListener("submit", manejarSubmit);
+    document.addEventListener("click", manejarClick);
+
+    async function iniciar() {
+      renderTopbar();
+
+      if (!credencialesListas()) {
+        estadoConexion.label = "Configurar";
+        estadoConexion.type = "error";
+        renderTopbar();
+        renderConfigurarSupabase();
+        return;
+      }
+
+      try {
+        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        await cargarEstadoInicial();
+        configurarRealtime();
+        await configurarPresencia();
+        iniciarReloj();
+
+        estadoConexion.label = "Conectado";
+        estadoConexion.type = "online";
+
+        if (jugador.trim()) {
+          await unirJugador(jugador, true);
+        } else {
+          render();
+        }
+      } catch (error) {
+        console.error(error);
+        estadoConexion.label = "Error";
+        estadoConexion.type = "error";
+        renderTopbar();
+        renderError("No se pudo conectar con la sala. Revisa las credenciales y vuelve a cargar.");
+      }
+    }
+
+    function credencialesListas() {
+      try {
+        const url = new URL(SUPABASE_URL);
+        return url.protocol.startsWith("http") && SUPABASE_ANON_KEY.trim().length > 20;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function cargarEstadoInicial() {
+      const { data, error } = await supabaseClient
+        .from("game_state")
+        .select("*")
+        .eq("id", SALA)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      gameState = data || {
+        id: SALA,
+        activo: false,
+        pregunta_idx: 0,
+        revelada: false,
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    function configurarRealtime() {
+      stateChannel = supabaseClient
+        .channel("player-game-state")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "game_state", filter: "id=eq." + SALA },
+          async (payload) => {
+            gameState = payload.new;
+            opcionTemporal = null;
+            enviandoRespuesta = false;
+            if (unido) await refrescarDatosJugadorSeguro();
+            render();
+          }
+        )
+        .subscribe((status) => actualizarEstadoCanal(status));
+
+      respuestasChannel = supabaseClient
+        .channel("player-respuestas")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "respuestas", filter: "sala=eq." + SALA },
+          async () => {
+            if (unido) {
+              await refrescarDatosJugadorSeguro();
+              render();
+            }
+          }
+        )
+        .subscribe((status) => actualizarEstadoCanal(status));
+    }
+
+    function configurarPresencia() {
+      return new Promise((resolve) => {
+        let resuelto = false;
+        const terminar = () => {
+          if (resuelto) return;
+          resuelto = true;
+          resolve();
+        };
+
+        presenceChannel = supabaseClient
+          .channel("presence:" + SALA, {
+            config: {
+              presence: {
+                key: "player-" + crearIdCorto()
+              }
+            }
+          })
+          .on("presence", { event: "sync" }, () => {
+            nombresConectados = leerNombresConectados();
+          })
+          .subscribe((status) => {
+            actualizarEstadoCanal(status);
+            if (status === "SUBSCRIBED") terminar();
+          });
+
+        setTimeout(terminar, 1800);
+      });
+    }
+
+    function actualizarEstadoCanal(status) {
+      if (status === "SUBSCRIBED") {
+        estadoConexion.label = "Conectado";
+        estadoConexion.type = "online";
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        estadoConexion.label = "Reconectando";
+        estadoConexion.type = "pending";
+      }
+      renderTopbar();
+    }
+
+    async function manejarSubmit(event) {
+      if (!event.target.matches("#joinForm")) return;
+      event.preventDefault();
+      const input = document.getElementById("nombreInput");
+      await unirJugador(input.value, false);
+    }
+
+    async function manejarClick(event) {
+      const respuesta = event.target.closest("[data-answer]");
+      if (!respuesta) return;
+      const opcion = Number(respuesta.dataset.answer);
+      await enviarRespuesta(opcion);
+    }
+
+    async function unirJugador(nombreIngresado, automatico) {
+      const nombre = String(nombreIngresado || "").trim().replace(/\s+/g, " ");
+      limpiarMensaje();
+
+      if (!nombre) {
+        mostrarMensaje("Escribe tu nombre para unirte.");
+        render();
+        return;
+      }
+
+      if (!automatico && nombreEstaConectado(nombre)) {
+        mostrarMensaje("Ese nombre ya está conectado. Usa otro nombre.");
+        render();
+        return;
+      }
+
+      jugador = nombre;
+      unido = true;
+      localStorage.setItem(STORAGE_NOMBRE, jugador);
+
+      if (presenceChannel) {
+        await presenceChannel.track({
+          role: "player",
+          jugador,
+          online_at: new Date().toISOString()
+        });
+      }
+
+      await refrescarDatosJugadorSeguro();
+      render();
+    }
+
+    async function enviarRespuesta(opcion) {
+      if (!unido || enviandoRespuesta || !gameState || gameState.revelada) return;
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      if (!pregunta || respuestaActual()) return;
+
+      const restante = tiempoRestanteMs();
+      if (restante <= 0) return;
+
+      enviandoRespuesta = true;
+      opcionTemporal = opcion;
+      limpiarMensaje();
+      render();
+
+      const tiempoMs = calcularTiempoRespuestaMs(pregunta);
+      const registro = {
+        sala: SALA,
+        jugador,
+        pregunta_idx: idx,
+        opcion,
+        correcta: opcion === pregunta.correcta,
+        tiempo_ms: tiempoMs
+      };
+
+      const { error } = await supabaseClient
+        .from("respuestas")
+        .insert(registro);
+
+      if (error && error.code !== "23505") {
+        console.error(error);
+        enviandoRespuesta = false;
+        opcionTemporal = null;
+        mostrarMensaje("No se pudo enviar tu respuesta. Inténtalo otra vez.");
+        render();
+        return;
+      }
+
+      await refrescarDatosJugadorSeguro();
+      enviandoRespuesta = false;
+      opcionTemporal = null;
+      limpiarMensaje();
+      render();
+    }
+
+    async function refrescarDatosJugadorSeguro() {
+      try {
+        await Promise.all([cargarRespuestasPropias(), cargarTodasRespuestas()]);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function cargarRespuestasPropias() {
+      if (!jugador) {
+        respuestasPropias = [];
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("respuestas")
+        .select("*")
+        .eq("sala", SALA)
+        .eq("jugador", jugador);
+
+      if (error) throw error;
+      respuestasPropias = data || [];
+    }
+
+    async function cargarTodasRespuestas() {
+      const { data, error } = await supabaseClient
+        .from("respuestas")
+        .select("*")
+        .eq("sala", SALA);
+
+      if (error) throw error;
+      todasRespuestas = data || [];
+    }
+
+    function iniciarReloj() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        actualizarTimerVisual();
+      }, 250);
+    }
+
+    function renderTopbar() {
+      topbar.innerHTML = `
+        <div class="brand">
+          <div class="brand-mark">SCE</div>
+          <h1 class="brand-title">Quiz SCE</h1>
+        </div>
+        <div class="connection"><span class="dot ${estadoConexion.type === "online" ? "online" : estadoConexion.type === "error" ? "error" : ""}"></span>${escapeHtml(estadoConexion.label)}</div>
+      `;
+    }
+
+    function render() {
+      renderTopbar();
+
+      if (!unido) {
+        renderIngreso();
+        return;
+      }
+
+      if (!gameState) {
+        renderEspera("Conectando con la sala...");
+        return;
+      }
+
+      if (!gameState.activo && Number(gameState.pregunta_idx) >= PREGUNTAS.length) {
+        renderFinal();
+        return;
+      }
+
+      if (!gameState.activo) {
+        renderEspera("Esperando que el host inicie la pregunta...");
+        return;
+      }
+
+      if (Number(gameState.pregunta_idx) >= PREGUNTAS.length) {
+        renderFinal();
+        return;
+      }
+
+      if (gameState.revelada) {
+        renderResultadoPregunta();
+        return;
+      }
+
+      if (respuestaActual()) {
+        renderRespuestaEnviada();
+        return;
+      }
+
+      renderPreguntaActiva();
+    }
+
+    function renderConfigurarSupabase() {
+      view.innerHTML = `
+        <section class="card">
+          <p class="eyebrow">Configuración</p>
+          <h2 class="title">Supabase</h2>
+          <p class="subtitle">Reemplaza <strong>SUPABASE_URL</strong> y <strong>SUPABASE_ANON_KEY</strong> al inicio de este archivo.</p>
+          <div class="error-note">Ejecuta <strong>setup.sql</strong> en Supabase antes de usar la sala.</div>
+        </section>
+      `;
+    }
+
+    function renderError(mensaje) {
+      view.innerHTML = `
+        <section class="card">
+          <p class="eyebrow">Error</p>
+          <h2>No se pudo iniciar</h2>
+          <div class="error-note">${escapeHtml(mensaje)}</div>
+        </section>
+      `;
+    }
+
+    function renderIngreso() {
+      view.innerHTML = `
+        <section class="card">
+          <p class="eyebrow">Participante</p>
+          <h2 class="title">Quiz SCE</h2>
+          <p class="subtitle">Ingresa con tu nombre para responder desde este celular.</p>
+          <form id="joinForm">
+            <div class="field">
+              <label for="nombreInput">Nombre</label>
+              <input id="nombreInput" name="nombre" type="text" value="${escapeHtml(jugador)}" maxlength="40" autocomplete="name" required>
+            </div>
+            <button class="primary-btn" type="submit">Unirse</button>
+            <p class="message" id="joinMessage">${escapeHtml(window.__joinMessage || "")}</p>
+          </form>
+        </section>
+      `;
+      const input = document.getElementById("nombreInput");
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+
+    function renderEspera(texto) {
+      view.innerHTML = `
+        <section class="card dark center">
+          <p class="eyebrow">Sala ${escapeHtml(SALA)}</p>
+          <h2 class="title">En espera</h2>
+          <p class="subtitle">${escapeHtml(texto)}</p>
+          <span class="status-name">${escapeHtml(jugador)}</span>
+          <div class="spinner" aria-hidden="true"></div>
+        </section>
+      `;
+    }
+
+    function renderPreguntaActiva() {
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      const sinTiempo = tiempoRestanteMs() <= 0;
+
+      view.innerHTML = `
+        <section>
+          <div class="timer-strip" aria-hidden="true"><div class="timer-fill" id="timerFill"></div></div>
+          <div class="question-head">
+            <div class="question-count">Pregunta ${idx + 1} de ${PREGUNTAS.length}</div>
+            <div class="timer-number" id="timerNumber">${Math.ceil(tiempoRestanteMs() / 1000)}</div>
+          </div>
+          <div class="answer-grid">
+            ${pregunta.opciones.map((opcion, opcionIdx) => `
+              <button class="answer-btn ${OPCION_CLASES[opcionIdx]} ${opcionTemporal === opcionIdx ? "selected" : ""}" data-answer="${opcionIdx}" ${enviandoRespuesta || sinTiempo ? "disabled" : ""}>
+                <span class="answer-icon">${ICONOS[opcionIdx]}</span>
+                <span class="answer-text">${escapeHtml(opcion)}</span>
+              </button>
+            `).join("")}
+          </div>
+          <p class="message">${escapeHtml(window.__joinMessage || "")}</p>
+        </section>
+      `;
+      actualizarTimerVisual();
+    }
+
+    function renderRespuestaEnviada() {
+      const idx = Number(gameState.pregunta_idx);
+      view.innerHTML = `
+        <section class="card dark center">
+          <p class="eyebrow">Pregunta ${idx + 1} de ${PREGUNTAS.length}</p>
+          <h2 class="big-result">¡Respuesta enviada!</h2>
+          <p class="subtitle">El host está por revelar la respuesta...</p>
+          <span class="status-name">${escapeHtml(jugador)}</span>
+          <div class="spinner" aria-hidden="true"></div>
+        </section>
+      `;
+    }
+
+    function renderResultadoPregunta() {
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      const respuesta = respuestaActual();
+      const puntos = calcularPuntos(respuesta);
+      const total = puntajePropio();
+      const acerto = Boolean(respuesta && respuesta.correcta);
+      const titulo = respuesta ? (acerto ? "¡Correcto!" : "Fallaste") : "Sin respuesta";
+      const detalle = respuesta
+        ? "Respuesta correcta: " + pregunta.opciones[pregunta.correcta]
+        : "No se registró una respuesta para esta pregunta.";
+
+      view.innerHTML = `
+        <section class="card dark center">
+          <p class="eyebrow">Resultado</p>
+          <h2 class="big-result">${escapeHtml(titulo)}</h2>
+          <p class="subtitle">${escapeHtml(detalle)}</p>
+          <div class="score-grid">
+            <div class="score-box"><strong>${puntos}</strong><span>puntos en esta pregunta</span></div>
+            <div class="score-box"><strong>${total}</strong><span>puntaje acumulado</span></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function renderFinal() {
+      const ranking = calcularRanking();
+      const posicion = ranking.findIndex((fila) => normalizarNombre(fila.jugador) === normalizarNombre(jugador)) + 1;
+      const total = puntajePropio();
+      const top = ranking.slice(0, 5);
+
+      view.innerHTML = `
+        <section class="card dark">
+          <p class="eyebrow">Resultados finales</p>
+          <h2 class="title">${posicion ? "#" + posicion : "Gracias"}</h2>
+          <p class="subtitle">${escapeHtml(jugador)} · ${total} puntos</p>
+          ${top.length ? `
+            <div class="ranking">
+              ${top.map((fila, idx) => `
+                <div class="rank-row ${normalizarNombre(fila.jugador) === normalizarNombre(jugador) ? "me" : ""}">
+                  <div class="rank-pos">#${idx + 1}</div>
+                  <div class="rank-name">${escapeHtml(fila.jugador)}</div>
+                  <div class="rank-points">${fila.puntos}</div>
+                </div>
+              `).join("")}
+            </div>
+          ` : `<p class="subtitle">Aún no hay respuestas registradas.</p>`}
+        </section>
+      `;
+    }
+
+    function actualizarTimerVisual() {
+      const fill = document.getElementById("timerFill");
+      const number = document.getElementById("timerNumber");
+      if (!fill && !number) return;
+      if (!gameState || gameState.revelada || !gameState.activo) return;
+
+      const idx = Number(gameState.pregunta_idx);
+      const pregunta = PREGUNTAS[idx];
+      if (!pregunta) return;
+
+      const restante = tiempoRestanteMs();
+      const total = pregunta.tiempo * 1000;
+      const porcentaje = Math.max(0, Math.min(100, (restante / total) * 100));
+      const segundos = Math.ceil(restante / 1000);
+      const urgente = segundos <= 5;
+
+      if (fill) {
+        fill.style.width = porcentaje + "%";
+        fill.classList.toggle("urgent", urgente);
+      }
+
+      if (number) {
+        number.textContent = segundos;
+        number.classList.toggle("urgent", urgente);
+      }
+    }
+
+    function tiempoRestanteMs() {
+      if (!gameState || Number(gameState.pregunta_idx) >= PREGUNTAS.length) return 0;
+      const pregunta = PREGUNTAS[Number(gameState.pregunta_idx)];
+      const inicio = Date.parse(gameState.updated_at);
+      const transcurrido = Date.now() - inicio;
+      return Math.max(0, pregunta.tiempo * 1000 - transcurrido);
+    }
+
+    function calcularTiempoRespuestaMs(pregunta) {
+      const inicio = Date.parse(gameState.updated_at);
+      const tiempo = Date.now() - inicio;
+      return Math.max(0, Math.min(tiempo, pregunta.tiempo * 1000));
+    }
+
+    function respuestaActual() {
+      if (!gameState) return null;
+      const idx = Number(gameState.pregunta_idx);
+      return respuestasPropias.find((respuesta) => Number(respuesta.pregunta_idx) === idx) || null;
+    }
+
+    function puntajePropio() {
+      return respuestasPropias.reduce((total, respuesta) => total + calcularPuntos(respuesta), 0);
+    }
+
+    function calcularRanking() {
+      const acumulado = new Map();
+
+      todasRespuestas.forEach((respuesta) => {
+        const nombre = String(respuesta.jugador || "").trim();
+        if (!nombre) return;
+        const clave = normalizarNombre(nombre);
+        const actual = acumulado.get(clave) || {
+          jugador: nombre,
+          puntos: 0,
+          correctas: 0,
+          tiempoTotal: 0
+        };
+
+        actual.puntos += calcularPuntos(respuesta);
+        if (respuesta.correcta) actual.correctas += 1;
+        actual.tiempoTotal += Number(respuesta.tiempo_ms) || 0;
+        acumulado.set(clave, actual);
+      });
+
+      return Array.from(acumulado.values()).sort((a, b) => {
+        if (b.puntos !== a.puntos) return b.puntos - a.puntos;
+        if (b.correctas !== a.correctas) return b.correctas - a.correctas;
+        return a.tiempoTotal - b.tiempoTotal;
+      });
+    }
+
+    function calcularPuntos(respuesta) {
+      if (!respuesta || !respuesta.correcta) return 0;
+      const pregunta = PREGUNTAS[Number(respuesta.pregunta_idx)];
+      if (!pregunta) return 0;
+      const maximoMs = pregunta.tiempo * 1000;
+      const tiempo = Math.max(0, Math.min(Number(respuesta.tiempo_ms) || 0, maximoMs));
+      const bonus = Math.max(0, Math.round((1 - tiempo / maximoMs) * 500));
+      return 1000 + bonus;
+    }
+
+    function leerNombresConectados() {
+      const nombres = new Set();
+      if (!presenceChannel) return nombres;
+
+      Object.values(presenceChannel.presenceState()).flat().forEach((presencia) => {
+        if (presencia.role === "player" && presencia.jugador) {
+          nombres.add(normalizarNombre(presencia.jugador));
+        }
+      });
+
+      return nombres;
+    }
+
+    function nombreEstaConectado(nombre) {
+      nombresConectados = leerNombresConectados();
+      return nombresConectados.has(normalizarNombre(nombre));
+    }
+
+    function mostrarMensaje(mensaje) {
+      window.__joinMessage = mensaje;
+    }
+
+    function limpiarMensaje() {
+      window.__joinMessage = "";
+    }
+
+    function normalizarNombre(nombre) {
+      return String(nombre || "").trim().toLocaleLowerCase("es");
+    }
+
+    function crearIdCorto() {
+      if (window.crypto && crypto.getRandomValues) {
+        const bytes = new Uint32Array(2);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes).map((n) => n.toString(36)).join("-");
+      }
+      return String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+    }
+
+    function escapeHtml(valor) {
+      return String(valor)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
