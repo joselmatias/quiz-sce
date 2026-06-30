@@ -199,17 +199,51 @@
 
     .lobby-grid {
       display: grid;
-      grid-template-columns: minmax(220px, 0.75fr) minmax(320px, 1.25fr);
+      grid-template-columns: minmax(190px, 0.65fr) minmax(320px, 1.1fr) minmax(250px, 0.85fr);
       gap: 18px;
       align-items: stretch;
     }
 
     .stat-box,
-    .url-box {
+    .url-box,
+    .qr-box {
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 20px;
       background: #F7F4FF;
+    }
+
+    .qr-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .qr-frame {
+      width: min(100%, 252px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+    }
+
+    .qr-frame svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .qr-help {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.3;
+      font-weight: 700;
     }
 
     .stat-value {
@@ -636,6 +670,7 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
   <script>
@@ -1049,6 +1084,11 @@
                   <button class="secondary-btn" data-action="copy-url">Copiar</button>
                 </div>
               </div>
+              <div class="qr-box">
+                <span class="field-label">Escanear para entrar</span>
+                <div class="qr-frame" id="qrJugador" aria-label="Código QR para participantes"></div>
+                <p class="qr-help">Apunta la cámara del celular para abrir la pantalla de participante.</p>
+              </div>
             </div>
             <div class="actions">
               <button class="primary-btn" data-action="start">Iniciar juego</button>
@@ -1056,6 +1096,7 @@
           </div>
         </section>
       `;
+      renderQrJugador();
     }
 
     function renderPreguntaActiva() {
@@ -1314,6 +1355,22 @@
       if (href.includes("host.html")) return href.replace("host.html", "player.html");
       if (href.endsWith("/")) return href + "player.html";
       return href.replace(/[^/]*$/, "player.html");
+    }
+
+    function renderQrJugador() {
+      const contenedor = document.getElementById("qrJugador");
+      if (!contenedor) return;
+
+      const url = obtenerUrlJugador();
+      if (typeof qrcode !== "function") {
+        contenedor.innerHTML = `<span class="empty-state">QR no disponible</span>`;
+        return;
+      }
+
+      const qr = qrcode(0, "M");
+      qr.addData(url);
+      qr.make();
+      contenedor.innerHTML = qr.createSvgTag(6, 1);
     }
 
     function normalizarNombre(nombre) {

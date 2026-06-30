@@ -119,7 +119,7 @@ La pantalla de participantes estará en:
 https://joselmatias.github.io/quiz-sce/player.html
 ```
 
-Usa la URL de `player.html` para generar el QR de los estudiantes.
+El host muestra automáticamente un código QR hacia `player.html` en el lobby. Proyecta esa pantalla para que los estudiantes escaneen el QR, abran la pantalla de participante y registren su nombre.
 
 ## Paso 6: Jugar
 
