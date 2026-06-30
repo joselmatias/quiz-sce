@@ -108,6 +108,13 @@
       flex-wrap: wrap;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -294,7 +301,9 @@
     }
 
     .primary-btn,
-    .secondary-btn {
+    .secondary-btn,
+    .danger-btn,
+    .header-btn {
       min-height: 54px;
       padding: 0 22px;
       border-radius: 8px;
@@ -314,8 +323,24 @@
       color: var(--sce-purple);
     }
 
+    .danger-btn {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .header-btn {
+      min-height: 40px;
+      padding: 0 13px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--paper);
+      font-size: 15px;
+    }
+
     .primary-btn:hover:not(:disabled),
-    .secondary-btn:hover:not(:disabled) {
+    .secondary-btn:hover:not(:disabled),
+    .danger-btn:hover:not(:disabled),
+    .header-btn:hover:not(:disabled) {
       transform: translateY(-1px);
     }
 
@@ -609,6 +634,62 @@
       opacity: 1;
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(10, 4, 24, 0.72);
+    }
+
+    .modal-backdrop.visible {
+      display: grid;
+    }
+
+    .qr-modal {
+      width: min(520px, 100%);
+      padding: 26px;
+      border-radius: 8px;
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+
+    .qr-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .qr-modal h2 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 44px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #EFE8FF;
+      color: var(--sce-purple);
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    .qr-modal .qr-frame {
+      width: min(100%, 360px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .error-note {
       margin-top: 18px;
       padding: 14px 16px;
@@ -669,6 +750,7 @@
     <main class="view" id="view" aria-live="polite"></main>
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="modal-backdrop" id="qrModal" aria-hidden="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
@@ -764,6 +846,7 @@
     const header = document.getElementById("hostHeader");
     const view = document.getElementById("view");
     const toast = document.getElementById("toast");
+    const qrModal = document.getElementById("qrModal");
 
     document.addEventListener("DOMContentLoaded", iniciar);
     document.addEventListener("click", manejarClick);
@@ -917,6 +1000,9 @@
         if (accion === "next") await siguientePregunta();
         if (accion === "new") await iniciarPartida();
         if (accion === "copy-url") await copiarUrlJugador();
+        if (accion === "show-qr") mostrarQrModal();
+        if (accion === "close-qr") cerrarQrModal();
+        if (accion === "reset-room") await reiniciarSala();
       } catch (error) {
         console.error(error);
         mostrarToast(error.message || "No se pudo completar la acción.");
@@ -937,6 +1023,33 @@
       };
 
       await estadoRef().set(gameState);
+      render();
+    }
+
+    async function reiniciarSala() {
+      const confirmar = window.confirm("Esto borrará respuestas, limpiará participantes conectados y volverá al lobby. ¿Reiniciar sala?");
+      if (!confirmar) return;
+
+      await Promise.all([
+        respuestasRef().remove(),
+        presenciaRef().remove()
+      ]);
+
+      respuestas = [];
+      participantes = 0;
+      revealInFlight = false;
+      gameState = estadoInicial();
+      await estadoRef().set(gameState);
+
+      if (hostPresenceRef) {
+        await hostPresenceRef.set({
+          role: "host",
+          online_at: new Date().toISOString()
+        });
+        hostPresenceRef.onDisconnect().remove();
+      }
+
+      mostrarToast("Sala reiniciada. Proyecta el QR para que entren de nuevo.");
       render();
     }
 
@@ -1000,6 +1113,10 @@
         <div class="header-metrics">
           <div class="pill"><span class="status-dot ${estadoConexion.type === "online" ? "online" : estadoConexion.type === "error" ? "error" : ""}"></span>${escapeHtml(estadoConexion.label)}</div>
           <div class="pill">${participantes} participantes</div>
+          <div class="header-actions">
+            <button class="header-btn" data-action="show-qr">Mostrar QR</button>
+            <button class="header-btn" data-action="reset-room">Reiniciar sala</button>
+          </div>
         </div>
       `;
     }
@@ -1359,18 +1476,51 @@
 
     function renderQrJugador() {
       const contenedor = document.getElementById("qrJugador");
+      renderQrEn(contenedor);
+    }
+
+    function renderQrEn(contenedor) {
       if (!contenedor) return;
+      const svg = crearQrSvg(obtenerUrlJugador());
+      contenedor.innerHTML = svg || `<span class="empty-state">QR no disponible</span>`;
+    }
 
-      const url = obtenerUrlJugador();
-      if (typeof qrcode !== "function") {
-        contenedor.innerHTML = `<span class="empty-state">QR no disponible</span>`;
-        return;
-      }
-
+    function crearQrSvg(url) {
+      if (typeof qrcode !== "function") return "";
       const qr = qrcode(0, "M");
       qr.addData(url);
       qr.make();
-      contenedor.innerHTML = qr.createSvgTag(6, 1);
+      return qr.createSvgTag(6, 1);
+    }
+
+    function mostrarQrModal() {
+      if (!qrModal) return;
+      qrModal.innerHTML = `
+        <section class="qr-modal" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+          <div class="qr-modal-head">
+            <div>
+              <p class="eyebrow">Ingreso de participantes</p>
+              <h2 id="qrModalTitle">Escanear QR</h2>
+            </div>
+            <button class="icon-btn" data-action="close-qr" aria-label="Cerrar">×</button>
+          </div>
+          <div class="qr-frame" id="qrJugadorModal" aria-label="Código QR para participantes"></div>
+          <p class="qr-help">${escapeHtml(obtenerUrlJugador())}</p>
+          <div class="actions">
+            <button class="secondary-btn" data-action="copy-url">Copiar URL</button>
+          </div>
+        </section>
+      `;
+      qrModal.classList.add("visible");
+      qrModal.setAttribute("aria-hidden", "false");
+      renderQrEn(document.getElementById("qrJugadorModal"));
+    }
+
+    function cerrarQrModal() {
+      if (!qrModal) return;
+      qrModal.classList.remove("visible");
+      qrModal.setAttribute("aria-hidden", "true");
+      qrModal.innerHTML = "";
     }
 
     function normalizarNombre(nombre) {

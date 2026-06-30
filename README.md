@@ -119,7 +119,7 @@ La pantalla de participantes estará en:
 https://joselmatias.github.io/quiz-sce/player.html
 ```
 
-El host muestra automáticamente un código QR hacia `player.html` en el lobby. Proyecta esa pantalla para que los estudiantes escaneen el QR, abran la pantalla de participante y registren su nombre.
+El host muestra automáticamente un código QR hacia `player.html` en el lobby. También puedes abrirlo en cualquier momento con el botón **Mostrar QR** del encabezado. Proyecta ese QR para que los estudiantes abran la pantalla de participante y registren su nombre.
 
 ## Paso 6: Jugar
 
@@ -130,6 +130,8 @@ El host muestra automáticamente un código QR hacia `player.html` en el lobby. 
 5. Al final se muestra el ranking.
 
 Al iniciar una nueva partida se eliminan las respuestas anteriores de `sala1`.
+
+Si la sala queda en una pregunta anterior o aparece un participante colgado, usa **Reiniciar sala** desde el encabezado del host. Ese botón borra respuestas, limpia presencia y vuelve al lobby con el QR listo.
 
 ## Estructura en Firebase
 
