@@ -636,10 +636,19 @@
   </div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
   <script>
-    const SUPABASE_URL = ""; // REEMPLAZAR
-    const SUPABASE_ANON_KEY = ""; // REEMPLAZAR
+    const FIREBASE_CONFIG = { // REEMPLAZAR
+      apiKey: "AIzaSyBpoD25lmipm51Pr0rHXOzQafnj2upDvbA",
+      authDomain: "replica-kahoot.firebaseapp.com",
+      databaseURL: "https://replica-kahoot-default-rtdb.firebaseio.com",
+      projectId: "replica-kahoot",
+      storageBucket: "replica-kahoot.firebasestorage.app",
+      messagingSenderId: "839059937966",
+      appId: "1:839059937966:web:f5752301d68d44030d2b3f",
+      measurementId: "G-5TFVYWDCX4"
+    };
     const SALA = "sala1";
 
     const PREGUNTAS = [
@@ -707,16 +716,15 @@
       type: "pending"
     };
 
-    let supabaseClient = null;
+    let firebaseApp = null;
+    let database = null;
     let gameState = null;
     let respuestas = [];
     let participantes = 0;
     let timerInterval = null;
     let revealInFlight = false;
     let toastTimer = null;
-    let stateChannel = null;
-    let respuestasChannel = null;
-    let presenceChannel = null;
+    let hostPresenceRef = null;
 
     const header = document.getElementById("hostHeader");
     const view = document.getElementById("view");
@@ -732,12 +740,13 @@
         estadoConexion.label = "Configurar";
         estadoConexion.type = "error";
         renderHeader();
-        renderConfigurarSupabase();
+        renderConfigurarFirebase();
         return;
       }
 
       try {
-        supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+        database = firebase.database();
         await cargarEstadoInicial();
         await cargarRespuestas();
         configurarRealtime();
@@ -751,121 +760,79 @@
         estadoConexion.label = "Error";
         estadoConexion.type = "error";
         renderHeader();
-        renderError("No se pudo conectar con Supabase. Revisa las credenciales y ejecuta setup.sql.");
+        renderError("No se pudo conectar con Firebase. Revisa la configuración web y que Realtime Database esté activo.");
       }
     }
 
     function credencialesListas() {
       try {
-        const url = new URL(SUPABASE_URL);
-        return url.protocol.startsWith("http") && SUPABASE_ANON_KEY.trim().length > 20;
+        const url = new URL(FIREBASE_CONFIG.databaseURL);
+        return Boolean(
+          FIREBASE_CONFIG.apiKey &&
+          FIREBASE_CONFIG.projectId &&
+          FIREBASE_CONFIG.appId &&
+          url.protocol.startsWith("http")
+        );
       } catch (error) {
         return false;
       }
     }
 
     async function cargarEstadoInicial() {
-      const { data, error } = await supabaseClient
-        .from("game_state")
-        .select("*")
-        .eq("id", SALA)
-        .maybeSingle();
-
-      if (error) throw error;
+      const snapshot = await estadoRef().get();
+      const data = snapshot.val();
 
       if (data) {
-        gameState = data;
+        gameState = normalizarEstado(data);
         return;
       }
 
-      const { data: creado, error: upsertError } = await supabaseClient
-        .from("game_state")
-        .upsert({
-          id: SALA,
-          activo: false,
-          pregunta_idx: 0,
-          revelada: false,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (upsertError) throw upsertError;
-      gameState = creado;
+      gameState = estadoInicial();
+      await estadoRef().set(gameState);
     }
 
     async function cargarRespuestas() {
-      const { data, error } = await supabaseClient
-        .from("respuestas")
-        .select("*")
-        .eq("sala", SALA);
-
-      if (error) throw error;
-      respuestas = data || [];
+      const snapshot = await respuestasRef().get();
+      respuestas = objetoALista(snapshot.val());
     }
 
     function configurarRealtime() {
-      stateChannel = supabaseClient
-        .channel("host-game-state")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "game_state", filter: "id=eq." + SALA },
-          async (payload) => {
-            gameState = payload.new;
-            revealInFlight = false;
-            await cargarRespuestasSeguro();
-            render();
-          }
-        )
-        .subscribe((status) => actualizarEstadoCanal(status));
+      estadoRef().on("value", (snapshot) => {
+        gameState = normalizarEstado(snapshot.val() || estadoInicial());
+        revealInFlight = false;
+        render();
+      }, manejarErrorRealtime);
 
-      respuestasChannel = supabaseClient
-        .channel("host-respuestas")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "respuestas", filter: "sala=eq." + SALA },
-          async () => {
-            await cargarRespuestasSeguro();
-            render();
-          }
-        )
-        .subscribe((status) => actualizarEstadoCanal(status));
+      respuestasRef().on("value", (snapshot) => {
+        respuestas = objetoALista(snapshot.val());
+        render();
+      }, manejarErrorRealtime);
     }
 
     function configurarPresencia() {
-      presenceChannel = supabaseClient
-        .channel("presence:" + SALA, {
-          config: {
-            presence: {
-              key: "host-" + crearIdCorto()
-            }
-          }
-        })
-        .on("presence", { event: "sync" }, () => {
-          participantes = contarParticipantes(presenceChannel.presenceState());
-          renderHeader();
-          render();
-        })
-        .subscribe(async (status) => {
-          actualizarEstadoCanal(status);
-          if (status === "SUBSCRIBED") {
-            await presenceChannel.track({
-              role: "host",
-              online_at: new Date().toISOString()
-            });
-          }
-        });
-    }
+      hostPresenceRef = presenciaRef().child("host-" + crearIdCorto());
 
-    function actualizarEstadoCanal(status) {
-      if (status === "SUBSCRIBED") {
-        estadoConexion.label = "Conectado";
-        estadoConexion.type = "online";
-      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-        estadoConexion.label = "Reconectando";
-        estadoConexion.type = "pending";
-      }
-      renderHeader();
+      database.ref(".info/connected").on("value", async (snapshot) => {
+        if (snapshot.val() === true) {
+          estadoConexion.label = "Conectado";
+          estadoConexion.type = "online";
+          await hostPresenceRef.set({
+            role: "host",
+            online_at: new Date().toISOString()
+          });
+          hostPresenceRef.onDisconnect().remove();
+        } else {
+          estadoConexion.label = "Reconectando";
+          estadoConexion.type = "pending";
+        }
+        renderHeader();
+      });
+
+      presenciaRef().on("value", (snapshot) => {
+        participantes = contarParticipantes(snapshot.val());
+        renderHeader();
+        render();
+      }, manejarErrorRealtime);
     }
 
     async function cargarRespuestasSeguro() {
@@ -875,6 +842,14 @@
         console.error(error);
         mostrarToast("No se pudieron actualizar las respuestas.");
       }
+    }
+
+    function manejarErrorRealtime(error) {
+      console.error(error);
+      estadoConexion.label = "Error";
+      estadoConexion.type = "error";
+      renderHeader();
+      mostrarToast("Se perdió la conexión con Firebase.");
     }
 
     function iniciarReloj() {
@@ -916,28 +891,17 @@
     }
 
     async function iniciarPartida() {
-      const { error: deleteError } = await supabaseClient
-        .from("respuestas")
-        .delete()
-        .eq("sala", SALA);
-
-      if (deleteError) throw deleteError;
+      await respuestasRef().remove();
       respuestas = [];
 
-      const { data, error } = await supabaseClient
-        .from("game_state")
-        .upsert({
-          id: SALA,
-          activo: true,
-          pregunta_idx: 0,
-          revelada: false,
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      gameState = {
+        activo: true,
+        pregunta_idx: 0,
+        revelada: false,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-      gameState = data;
+      await estadoRef().set(gameState);
       render();
     }
 
@@ -945,16 +909,9 @@
       if (!gameState || gameState.revelada || revealInFlight) return;
       revealInFlight = true;
 
-      const { data, error } = await supabaseClient
-        .from("game_state")
-        .update({ revelada: true })
-        .eq("id", SALA)
-        .select()
-        .single();
-
+      await estadoRef().update({ revelada: true });
       revealInFlight = false;
-      if (error) throw error;
-      gameState = data;
+      gameState = { ...gameState, revelada: true };
       render();
     }
 
@@ -963,38 +920,26 @@
       const siguiente = Number(gameState.pregunta_idx) + 1;
 
       if (siguiente >= PREGUNTAS.length) {
-        const { data, error } = await supabaseClient
-          .from("game_state")
-          .update({
-            activo: false,
-            pregunta_idx: PREGUNTAS.length,
-            revelada: true,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", SALA)
-          .select()
-          .single();
+        gameState = {
+          activo: false,
+          pregunta_idx: PREGUNTAS.length,
+          revelada: true,
+          updated_at: new Date().toISOString()
+        };
 
-        if (error) throw error;
-        gameState = data;
+        await estadoRef().set(gameState);
         render();
         return;
       }
 
-      const { data, error } = await supabaseClient
-        .from("game_state")
-        .update({
-          activo: true,
-          pregunta_idx: siguiente,
-          revelada: false,
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", SALA)
-        .select()
-        .single();
+      gameState = {
+        activo: true,
+        pregunta_idx: siguiente,
+        revelada: false,
+        updated_at: new Date().toISOString()
+      };
 
-      if (error) throw error;
-      gameState = data;
+      await estadoRef().set(gameState);
       render();
     }
 
@@ -1055,13 +1000,13 @@
       renderPreguntaActiva();
     }
 
-    function renderConfigurarSupabase() {
+    function renderConfigurarFirebase() {
       view.innerHTML = `
         <section class="panel compact">
           <p class="eyebrow">Configuración</p>
-          <h2 class="lobby-title">Supabase</h2>
-          <p class="lobby-copy">Reemplaza <strong>SUPABASE_URL</strong> y <strong>SUPABASE_ANON_KEY</strong> al inicio de este archivo.</p>
-          <div class="error-note">Luego ejecuta <strong>setup.sql</strong> en Supabase y recarga esta página.</div>
+          <h2 class="lobby-title">Firebase</h2>
+          <p class="lobby-copy">Reemplaza <strong>FIREBASE_CONFIG</strong> al inicio de este archivo con la configuración web de tu proyecto.</p>
+          <div class="error-note">Activa Realtime Database, pega las reglas de <strong>database.rules.json</strong> y recarga esta página.</div>
         </section>
       `;
     }
@@ -1272,9 +1217,51 @@
       return aciertos.size;
     }
 
+    function salaRef(ruta) {
+      return database.ref("salas/" + SALA + "/" + ruta);
+    }
+
+    function estadoRef() {
+      return salaRef("estado");
+    }
+
+    function respuestasRef() {
+      return salaRef("respuestas");
+    }
+
+    function presenciaRef() {
+      return salaRef("presencia");
+    }
+
+    function estadoInicial() {
+      return {
+        activo: false,
+        pregunta_idx: 0,
+        revelada: false,
+        updated_at: new Date().toISOString()
+      };
+    }
+
+    function normalizarEstado(estado) {
+      return {
+        activo: Boolean(estado.activo),
+        pregunta_idx: Number(estado.pregunta_idx) || 0,
+        revelada: Boolean(estado.revelada),
+        updated_at: estado.updated_at || new Date().toISOString()
+      };
+    }
+
+    function objetoALista(objeto) {
+      if (!objeto) return [];
+      return Object.entries(objeto).map(([id, valor]) => ({
+        id,
+        ...valor
+      }));
+    }
+
     function contarParticipantes(presenceState) {
       const nombres = new Set();
-      Object.values(presenceState).flat().forEach((presencia) => {
+      Object.values(presenceState || {}).forEach((presencia) => {
         if (presencia.role === "player" && presencia.jugador) {
           nombres.add(normalizarNombre(presencia.jugador));
         }

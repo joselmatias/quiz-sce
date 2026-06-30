@@ -2,105 +2,126 @@
 
 Aplicación estática tipo Kahoot para capacitaciones presenciales de la Superintendencia de Competencia Económica del Ecuador.
 
+La app usa:
+
+- **Frontend**: `host.html` y `player.html` con HTML, CSS y JavaScript vanilla.
+- **Realtime**: Firebase Realtime Database.
+- **Hosting**: GitHub Pages o cualquier hosting estático.
+
 ## Prerrequisitos
 
-- Un proyecto de Supabase.
-- La URL del proyecto.
-- La anon key del proyecto.
-- Un navegador moderno en el laptop del facilitador y en los celulares de los participantes.
+- Un proyecto de Firebase.
+- Realtime Database activado.
+- Una app web registrada en Firebase para copiar el objeto `firebaseConfig`.
+- El repositorio publicado en GitHub Pages.
 
-No necesitas Netlify, Vercel ni otro hosting público si todos están en la misma red Wi-Fi o conectados al mismo hotspot. La aplicación puede abrirse como archivos HTML locales; si los participantes van a entrar desde sus celulares, basta con servir la carpeta desde el laptop del facilitador en esa red.
+## Paso 1: Registrar una app web en Firebase
 
-Si los participantes usarán sus propios datos móviles y no estarán en la misma red que el laptop, necesitas publicar estos archivos en una URL pública, por ejemplo con GitHub Pages, Netlify o Vercel. Supabase seguirá siendo el backend en tiempo real.
+1. Entra a Firebase Console.
+2. Abre tu proyecto.
+3. En la pantalla principal, haz clic en **Agregar app**.
+4. Selecciona el ícono web `</>`.
+5. Pon un nombre, por ejemplo `quiz-sce-web`.
+6. No es necesario activar Firebase Hosting.
+7. Copia el objeto `firebaseConfig` que te muestra Firebase.
 
-## Paso 1: Crear las tablas
+Se verá parecido a esto:
 
-1. Abre tu proyecto en Supabase.
-2. Ve a **SQL Editor**.
-3. Copia y ejecuta el contenido de `setup.sql`.
+```javascript
+const firebaseConfig = {
+  apiKey: "...",
+  authDomain: "...",
+  databaseURL: "...",
+  projectId: "...",
+  storageBucket: "...",
+  messagingSenderId: "...",
+  appId: "..."
+};
+```
 
-El script crea las tablas `game_state` y `respuestas`, desactiva RLS para uso interno, habilita permisos para `anon` y `authenticated`, y agrega ambas tablas a Supabase Realtime.
+## Paso 2: Activar Realtime Database
 
-## Paso 2: Reemplazar credenciales
+1. En Firebase Console, abre **Compilación** o **Build**.
+2. Entra a **Realtime Database**.
+3. Haz clic en **Crear base de datos**.
+4. Elige una región.
+5. Para una capacitación controlada, puedes iniciar en modo de prueba.
+
+Luego entra a la pestaña **Reglas** y reemplaza el contenido por el de `database.rules.json`:
+
+```json
+{
+  "rules": {
+    "salas": {
+      "$sala": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+```
+
+Estas reglas son abiertas para simplificar el demo. Úsalas solo en capacitaciones controladas y no como enlace público permanente.
+
+## Paso 3: Reemplazar la configuración Firebase
 
 Abre `host.html` y `player.html`.
 
-En la parte superior de cada archivo reemplaza:
+En la parte superior de cada archivo busca:
 
 ```javascript
-const SUPABASE_URL = ""; // REEMPLAZAR
-const SUPABASE_ANON_KEY = ""; // REEMPLAZAR
+const FIREBASE_CONFIG = { // REEMPLAZAR
+  apiKey: "",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
 ```
 
-por los valores de tu proyecto Supabase.
+Reemplaza los valores vacíos por los valores de tu `firebaseConfig`.
 
-## Paso 3: Abrir la pantalla del host
+No copies las líneas `import`, `initializeApp` ni `getAnalytics` que muestra Firebase. Esta app ya carga Firebase desde CDN y solo necesita el objeto de configuración.
 
-Para una prueba rápida en el mismo laptop, abre `host.html` en el navegador.
+Si Firebase no muestra `databaseURL`, primero crea Realtime Database y copia la URL de la base. Para este proyecto debería verse parecida a:
 
-Para usar celulares en la misma red Wi-Fi, sirve la carpeta desde el laptop del facilitador. Esto no publica la app en internet; solo crea una URL local para la sala. Una opción simple es:
-
-```bash
-npx serve kahoot-sce
+```javascript
+databaseURL: "https://replica-kahoot-default-rtdb.firebaseio.com"
 ```
 
-Luego abre la URL de `host.html` en el laptop del facilitador.
+## Paso 4: Subir los cambios a GitHub
 
-## Paso 4: Compartir la pantalla de participantes
+Desde PowerShell:
 
-El host muestra la URL de `player.html` en el lobby y permite copiarla.
-
-Si usas `npx serve`, comparte una URL parecida a:
-
-```text
-http://IP-DEL-LAPTOP:3000/player.html
-```
-
-Puedes generar un QR con esa URL y proyectarlo antes de iniciar la partida.
-
-## Opción con estudiantes usando datos móviles
-
-Si los estudiantes no estarán en la misma red que tu PC, sube estos archivos a GitHub y publícalos con GitHub Pages.
-
-Flujo recomendado:
-
-```bash
+```powershell
 cd "C:\Users\Admin\Documents\sce 26\simulador kahoot\kahoot-sce"
-git init
 git add .
-git commit -m "Crear quiz interactivo SCE"
-gh auth login -h github.com
-gh repo create quiz-sce --public --source=. --remote=origin --push
+git commit -m "Migrar quiz a Firebase Realtime Database"
+git push
 ```
 
-Si PowerShell abre en `C:\Users\Admin`, no uses `cd kahoot-sce` porque esa carpeta no existe ahí. Usa la ruta completa con comillas, como en el comando anterior.
+GitHub Pages actualizará el sitio después de unos minutos.
 
-Luego activa GitHub Pages:
+## Paso 5: Abrir las pantallas
 
-1. Entra al repositorio en GitHub.
-2. Ve a **Settings**.
-3. Abre **Pages**.
-4. En **Build and deployment**, selecciona **Deploy from a branch**.
-5. Elige la rama `main` y la carpeta `/root`.
-6. Guarda los cambios.
-
-No escribas nada en **Custom domain**. Ese campo solo se usa si tienes un dominio propio, por ejemplo `quiz.tudominio.com`. La URL `https://TU-USUARIO.github.io/quiz-sce/host.html` no se registra ahí; GitHub la genera automáticamente cuando Pages queda activo.
-
-Después de unos minutos tendrás una URL pública similar a:
+La pantalla del host estará en:
 
 ```text
-https://TU-USUARIO.github.io/quiz-sce/player.html
+https://joselmatias.github.io/quiz-sce/host.html
 ```
 
-Usa esa URL para generar el QR de participantes. El host también puede abrirse desde:
+La pantalla de participantes estará en:
 
 ```text
-https://TU-USUARIO.github.io/quiz-sce/host.html
+https://joselmatias.github.io/quiz-sce/player.html
 ```
 
-Importante: al publicar los HTML, la anon key de Supabase queda visible en el navegador. Esto es normal en apps frontend, pero como este proyecto usa RLS desactivado para simplificar el demo, conviene usarlo para capacitaciones controladas y no dejarlo como enlace abierto permanente.
+Usa la URL de `player.html` para generar el QR de los estudiantes.
 
-## Paso 5: Jugar
+## Paso 6: Jugar
 
 1. Los participantes ingresan su nombre desde `player.html`.
 2. El host presiona **Iniciar juego**.
@@ -110,7 +131,21 @@ Importante: al publicar los HTML, la anon key de Supabase queda visible en el na
 
 Al iniciar una nueva partida se eliminan las respuestas anteriores de `sala1`.
 
-## Paso 6: Agregar o editar preguntas
+## Estructura en Firebase
+
+La app escribe datos en estas rutas:
+
+```text
+salas/sala1/estado
+salas/sala1/respuestas
+salas/sala1/presencia
+```
+
+- `estado`: pregunta activa, si está revelada y hora de inicio.
+- `respuestas`: respuestas enviadas por cada jugador.
+- `presencia`: participantes conectados en tiempo real.
+
+## Agregar o editar preguntas
 
 Edita el array `PREGUNTAS` en `host.html` y en `player.html`.
 
